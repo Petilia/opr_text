@@ -1,7 +1,9 @@
 .vscode/
 
+*.joblib
+
 checkpoints/
-text_baseline.ipynb
+# text_baseline.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

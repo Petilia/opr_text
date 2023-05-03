@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import Dict, Literal, Optional, Tuple, Union
 
+import os
 import cv2
 import numpy as np
 import torch
@@ -68,9 +69,9 @@ class PhystechCampus(BaseDataset):
         self.image_transform = DefaultImageTransform(train=(subset == "train"), resize=(320, 192))
         self.cloud_transform = DefaultCloudTransform(train=(subset == "train"))
         self.cloud_set_transform = DefaultCloudSetTransform(train=(subset == "train"))
+        # self.vectorizer, self.pca = self._get_tfidf_pca()
+        self.vectorizer, self.pca = self._load_tfidf_pca()
         
-        self.vectorizer, self.pca = self._get_tfidf_pca()
-
     def __getitem__(self, idx: int) -> Dict[str, Union[int, Tensor]]:  # noqa: D105
         data: Dict[str, Union[int, Tensor]] = {"idx": idx}
         row = self.dataset_df.iloc[idx]
@@ -103,14 +104,23 @@ class PhystechCampus(BaseDataset):
         pc_tensor = torch.tensor(pc, dtype=torch.float32)
         return pc_tensor
     
-    def _get_tfidf_pca(self, n_components=100):
-        corpus = np.hstack((self.dataset_df["back_description"], self.dataset_df["front_description"]))
-        vectorizer = TfidfVectorizer()
-        vectorizer.fit(corpus)
-        vectorized_corpus = vectorizer.transform(corpus).toarray()
+    # def _get_tfidf_pca(self, n_components=100):
+    #     corpus = np.hstack((self.dataset_df["back_description"], self.dataset_df["front_description"]))
+    #     vectorizer = TfidfVectorizer()
+    #     vectorizer.fit(corpus)
+    #     vectorized_corpus = vectorizer.transform(corpus).toarray()
         
-        pca =PCA(n_components=n_components)
-        pca.fit(vectorized_corpus)
+    #     pca =PCA(n_components=n_components)
+    #     pca.fit(vectorized_corpus)
+    #     return vectorizer, pca
+    
+    def _load_tfidf_pca(self, base_savepath="./opr/datasets/"):
+        from joblib import load
+        vectorizer_savepath = os.path.join(base_savepath, 'vectorizer.joblib')
+        pca_savepath = os.path.join(base_savepath, 'pca.joblib')
+
+        vectorizer = load(vectorizer_savepath)
+        pca = load(pca_savepath)
         return vectorizer, pca
     
     def text_transform(self, text):
